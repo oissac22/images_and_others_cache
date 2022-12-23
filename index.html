@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <meta http-equiv="Cache-Control" content="max-age=60">
+
+    <script type="text/javascript" defer>
+
+        const CACHE_ID = 'BJj7c7crEm8Tajk3UAaNvWofjcjBxEOA';
+        const IMG_TEST_HOME = "home-BJj7c7crEm8Tajk3UAaNvWofjcjBxEOA.jpg";
+        const IMG_TEST_CAR = "car-BJj7c7crEm8Tajk3UAaNvWofjcjBxEOA.jpg";
+
+        async function readCache(id) {
+            return caches.open(id)
+        }
+
+        async function addInCache(url, cacheId) {
+            try {
+                const cache = await readCache(cacheId);
+                await cache.add(url)
+            } catch (e) {
+                console.log('ERROR:', e);
+            }
+        }
+
+        async function readFromCache(url, cacheId) {
+            const cache = await readCache(cacheId);
+            return await cache.match(url)
+        }
+
+        async function readFromCacheUrlValue(url, cacheId) {
+            const cache = await readFromCache(url, cacheId);
+            const blob = await cache.blob();
+            return URL.createObjectURL(blob);
+        }
+
+        async function addCacheIfNotExists(url, cacheId) {
+            const cache = await readFromCache(url, cacheId);
+            if (!cache) {
+                console.log(`add "${url}" in "${cacheId}"`);
+                await addInCache(url, cacheId);
+            }
+        }
+
+        async function readUlrBase64AndAddIfNotExists(url, cacheId) {
+            await addCacheIfNotExists(url, cacheId);
+            const urlCache = await readFromCacheUrlValue(url, cacheId);
+            return urlCache;
+        }
+
+        async function newImage(url, cacheId) {
+            const img = new Image();
+            try {
+                const urlCache = await readUlrBase64AndAddIfNotExists(url, cacheId);
+                img.src = urlCache;
+            } catch (e) {
+                console.log('ERROR:', e);
+            }
+            return img;
+        }
+
+        async function run() {
+            try {
+                const container = document.getElementById('container');
+                container.innerHTML = '';
+                container.appendChild(await newImage(IMG_TEST_CAR, CACHE_ID));
+                container.appendChild(await newImage(IMG_TEST_HOME, CACHE_ID));
+            } catch (e) {
+                console.log('ERROR:', e)
+            }
+        }
+    </script>
+
+    <style>
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        img {
+            max-width: 200px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="container"></div>
+    <button onclick="run()">Click me</button>
+</body>
+
+</html>
